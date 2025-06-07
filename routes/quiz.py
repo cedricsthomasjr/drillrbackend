@@ -3,6 +3,7 @@ from quizgen.generator import generate_quiz
 import os
 import pdfplumber
 import docx
+from quizgen.generator import extract_topics_and_definitions  # ← make sure this exists
 
 quiz_bp = Blueprint("quiz", __name__)
 
@@ -33,3 +34,27 @@ def upload_file():
         text = file.read().decode("utf-8")
 
     return jsonify({"text": text.strip()})
+
+
+@quiz_bp.route("/summarize", methods=["POST"])
+def summarize():
+    data = request.get_json()
+    content = data.get("study_material")
+
+    if not content:
+        return jsonify({"error": "Missing study_material"}), 400
+
+    topics = extract_topics_and_definitions(content)
+    return jsonify(topics)
+@quiz_bp.route("/flow/process", methods=["POST"])
+def flow_process():
+    data = request.get_json()
+    content = data.get("study_material")
+
+    if not content:
+        return jsonify({"error": "Missing study_material"}), 400
+
+    chunks = [para.strip() for para in content.split("\n") if para.strip()]
+    topics = extract_topics_and_definitions(content)
+
+    return jsonify({ "chunks": chunks, "topics": topics })
