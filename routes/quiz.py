@@ -131,27 +131,24 @@ Grade using this scale:
 - 0.4–0.1: Mostly incorrect. Some effort made, but they misunderstood or guessed wrong.
 - 0.0: Completely incorrect or irrelevant.
 
-**Do NOT take points of off for:**
+**Do NOT take points off for:**
 - Typos or grammar mistakes
 - Slightly different wording or phrasing
 - Leaving out small facts that don't affect overall meaning
-- Breif explanations that still full answer the questions 
-
+- Brief explanations that still fully answer the question
 
 **Do take points off for:**
 - Leaving out core parts of the answer
 - Including incorrect information that changes the meaning
 
-
 If an answer is too brief, yet MOSTLY answers the entire question, mark it correct, and provide feedback encouraging the user to go into depth.
 
-
 You must return ONLY a JSON object in this exact format:
-{
+{{
   "score": decimal between 0.0 and 1.0 (in 0.1 steps),
   "feedback": "short human-style comment (1–2 sentences)",
   "confidence": 0–100
-}
+}}
 
 Be fair, understanding, and honest. Do not be robotic or overly strict.
 
@@ -159,6 +156,7 @@ Question: {question}
 Correct Answer: {correct_answer}
 User's Answer: {user_answer}
 """
+
 
     try:
         response = openai.ChatCompletion.create(
