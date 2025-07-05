@@ -118,59 +118,64 @@ def grade_free_response():
     if not all([question, user_answer, correct_answer]):
         return jsonify({"error": "Missing fields"}), 400
 
-    prompt = f"""
-You are grading a student's free response to a quiz question.
-
-You are **not a strict computer**. You are a **reasonable human teacher** who values understanding over memorization.
-
-Grade using this scale:
-- 1.0: Fully correct. The answer shows clear understanding and covers all major points. Minor omissions or phrasing differences are okay.
-- 0.9–0.8: Mostly correct. One small idea or detail might be missing or slightly off, but overall understanding is strong.
-- 0.7–0.6: Partially correct. The student gets the gist but leaves out multiple important ideas or includes some confusion.
-- 0.5: Halfway. They made a good attempt but missed key pieces of logic or context.
-- 0.4–0.1: Mostly incorrect. Some effort made, but they misunderstood or guessed wrong.
-- 0.0: Completely incorrect or irrelevant.
-
-**Do NOT take points off for:**
-- Typos or grammar mistakes
-- Slightly different wording or phrasing
-- Leaving out small facts that don't affect overall meaning
-- Brief explanations that still fully answer the question
-
-**Do take points off for:**
-- Leaving out core parts of the answer
-- Including incorrect information that changes the meaning
-
-If an answer is too brief, yet MOSTLY answers the entire question, mark it correct, and provide feedback encouraging the user to go into depth.
-
-You must return ONLY a JSON object in this exact format:
-{{
-  "score": decimal between 0.0 and 1.0 (in 0.1 steps),
-  "feedback": "short human-style comment (1–2 sentences)",
-  "confidence": 0–100
-}}
-
-Be fair, understanding, and honest. Do not be robotic or overly strict.
-
-Question: {question}
-Correct Answer: {correct_answer}
-User's Answer: {user_answer}
-"""
-
-
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful grading assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-        )
+    model="gpt-4o-mini",
+    messages=[
+        {
+  "role": "system",
+  "content": (
+    "You are a reasonable human teacher who grades free-response answers generously. "
+    "If the student’s answer states the main idea clearly, never deduct points for not adding every example, historical influence, or minor technical detail. "
+    "Only deduct if the missing information changes the student’s understanding of the core concept. "
+    "Always respond ONLY in JSON."
+  )
+}
+,
+        {
+            "role": "user",
+            "content": f"""
+Grade the following student's answer.
+
+**Grading Scale**
+- 1.0: Fully correct — the answer shows clear understanding and covers the main idea(s). Minor omissions, small missing examples, or slightly different wording **should NOT lower the score**.
+- 0.9–0.8: Mostly correct — the answer is mostly right but misses an important piece of the explanation or shows minor confusion.
+- 0.7–0.6: Partially correct — the gist is there, but multiple key points are missing or there is noticeable confusion.
+- 0.5: Halfway — a good attempt but major pieces are missing or incorrect.
+- 0.4–0.1: Mostly incorrect — some effort but misunderstood or guessed.
+- 0.0: Completely incorrect or irrelevant.
+
+**When in doubt, be generous.** If the answer explains the main point clearly, do not deduct points for not listing every variant or detail.
+
+**Do NOT deduct for:**  
+- Typos, grammar, or spelling mistakes  
+- Slightly different wording or phrasing  
+- Small facts that do not change the main meaning  
+- Brief but clear answers that hit the core idea
+
+**Do deduct for:**  
+- Leaving out core parts of the answer  
+- Including incorrect information that changes the meaning  
+- Showing misunderstanding of the main concept
+
+**Return only a JSON object exactly like this:**  
+{{
+  "score": decimal between 0.0 and 1.0 (0.1 steps),
+  "feedback": "short human-style comment (1–2 sentences)",
+  "confidence": integer between 0 and 100
+}}
+
+**Question:** {question}  
+**Correct Answer:** {correct_answer}  
+**User Answer:** {user_answer}
+"""
+        }
+    ],
+    temperature=0.2
+)
 
         result_text = response.choices[0].message.content.strip()
 
-        # Strip markdown if needed
         if "```json" in result_text:
             result_text = result_text.split("```json")[-1].split("```")[0].strip()
         elif "```" in result_text:
